@@ -1,0 +1,50 @@
+package com.example;
+
+import java.io.;
+import jakarta.servlet.;
+import jakarta.servlet.http.;
+import jakarta.servlet.annotation.;
+
+@WebServlet(LoginServlet)
+public class LoginServlet extends HttpServlet {
+
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+         Display login form
+        response.setContentType(texthtml);
+        PrintWriter out = response.getWriter();
+
+        out.println(!DOCTYPE html);
+        out.println(htmlheadtitleLogin Pagetitleheadbody);
+        out.println(h2Login Formh2);
+        out.println(form method='post' action='LoginServlet');
+        out.println(Username input type='text' name='username' requiredbrbr);
+        out.println(Password input type='password' name='password' requiredbrbr);
+        out.println(input type='submit' value='Login');
+        out.println(form);
+        out.println(bodyhtml);
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+
+         Retrieve user credentials
+        String username = request.getParameter(username);
+        String password = request.getParameter(password);
+
+        response.setContentType(texthtml);
+        PrintWriter out = response.getWriter();
+
+         Simple authentication (hardcoded)
+        if (admin.equals(username) && 1234.equals(password)) {
+            out.println(h2Welcome,  + username + !h2);
+        } else {
+            out.println(h2Invalid credentials. Please try again.h2);
+            out.println(a href='LoginServlet'Back to Logina);
+        }
+
+        out.close();
+    }
+}
