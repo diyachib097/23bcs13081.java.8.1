@@ -1,0 +1,115 @@
+package com.example;
+
+import java.io.*;
+import java.sql.*;
+import java.time.LocalDate;
+import jakarta.servlet.*;
+import jakarta.servlet.http.*;
+import jakarta.servlet.annotation.*;
+
+@WebServlet("/AttendanceServlet")
+public class AttendanceServlet extends HttpServlet {
+
+    // Database connection info
+    private static final String JDBC_URL = "jdbc:mysql://localhost:3306/attendance_db";
+    private static final String JDBC_USER = "root";
+    private static final String JDBC_PASS = "yourpassword"; // <-- change this
+
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+
+        response.setContentType("text/html");
+        PrintWriter out = response.getWriter();
+
+        out.println("<!DOCTYPE html>");
+        out.println("<html><head><title>Student Attendance Portal</title></head><body>");
+        out.println("<h2>Mark Attendance</h2>");
+
+        // Attendance Form
+        out.println("<form method='post' action='AttendanceServlet'>");
+        out.println("Student Name: <select name='studentName' required>");
+        out.println("<option value=''>--Select--</option>");
+        out.println("<option value='Alice'>Alice</option>");
+        out.println("<option value='Bob'>Bob</option>");
+        out.println("<option value='Charlie'>Charlie</option>");
+        out.println("</select><br><br>");
+
+        out.println("Status: ");
+        out.println("<input type='radio' name='status' value='Present' required> Present ");
+        out.println("<input type='radio' name='status' value='Absent'> Absent<br><br>");
+
+        out.println("<input type='submit' value='Submit Attendance'>");
+        out.println("</form><hr>");
+
+        // Display saved attendance records
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            Connection con = DriverManager.getConnection(JDBC_URL, JDBC_USER, JDBC_PASS);
+
+            Statement stmt = con.createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT * FROM attendance ORDER BY date DESC");
+
+            out.println("<h3>Attendance Records</h3>");
+            out.println("<table border='1' cellpadding='8'>");
+            out.println("<tr><th>ID</th><th>Student</th><th>Status</th><th>Date</th></tr>");
+
+            while (rs.next()) {
+                out.println("<tr>");
+                out.println("<td>" + rs.getInt("id") + "</td>");
+                out.println("<td>" + rs.getString("student_name") + "</td>");
+                out.println("<td>" + rs.getString("status") + "</td>");
+                out.println("<td>" + rs.getDate("date") + "</td>");
+                out.println("</tr>");
+            }
+
+            out.println("</table>");
+            con.close();
+        } catch (Exception e) {
+            out.println("<p style='color:red;'>Error fetching records: " + e.getMessage() + "</p>");
+        }
+
+        out.println("</body></html>");
+        out.close();
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+
+        String studentName = request.getParameter("studentName");
+        String status = request.getParameter("status");
+        LocalDate date = LocalDate.now();
+
+        response.setContentType("text/html");
+        PrintWriter out = response.getWriter();
+
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            Connection con = DriverManager.getConnection(JDBC_URL, JDBC_USER, JDBC_PASS);
+
+            PreparedStatement ps = con.prepareStatement(
+                "INSERT INTO attendance (student_name, status, date) VALUES (?, ?, ?)"
+            );
+            ps.setString(1, studentName);
+            ps.setString(2, status);
+            ps.setDate(3, Date.valueOf(date));
+
+            int rows = ps.executeUpdate();
+
+            if (rows > 0) {
+                out.println("<h3>Attendance saved successfully for " + studentName + " (" + status + ")</h3>");
+            } else {
+                out.println("<h3 style='color:red;'>Failed to save attendance.</h3>");
+            }
+
+            out.println("<a href='AttendanceServlet'>Back to Attendance Form</a>");
+
+            con.close();
+        } catch (Exception e) {
+            out.println("<p style='color:red;'>Database Error: " + e.getMessage() + "</p>");
+        }
+
+        out.close();
+    }
+}
